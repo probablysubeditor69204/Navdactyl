@@ -430,6 +430,33 @@ class PterodactylService {
             throw new Error('Failed to send command');
         }
     }
+    async writeFile(serverIdentifier: string, filePath: string, content: string): Promise<void> {
+        const accountKey = await this.getAccountKey();
+
+        const appUrl = process.env.PTERODACTYL_API_URL || '';
+        const baseUrl = new URL(appUrl);
+        const clientBaseUrl = `${baseUrl.protocol}//${baseUrl.host}/api/client`;
+
+        const client = axios.create({
+            baseURL: clientBaseUrl,
+            headers: {
+                'Authorization': `Bearer ${accountKey}`,
+                'Content-Type': 'text/plain',
+                'Accept': 'application/json',
+            },
+        });
+
+        try {
+            // Pterodactyl Client API: POST /api/client/servers/{identifier}/files/write?file={path}
+            // content is sent as body
+            await client.post(`/servers/${serverIdentifier}/files/write`, content, {
+                params: { file: filePath }
+            });
+        } catch (error: any) {
+            console.error('Pterodactyl Write File Error:', error.response?.data || error.message);
+            throw new Error('Failed to write file');
+        }
+    }
 }
 
 let pterodactylServiceInstance: PterodactylService | null = null;

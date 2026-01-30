@@ -1,7 +1,7 @@
 ﻿"use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Play, RotateCcw, Square, Terminal, Zap, Hash, Cpu, HardDrive } from "lucide-react"
+import { Play, RotateCcw, Square, Terminal, Zap, Hash, Cpu, HardDrive, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
@@ -18,6 +18,7 @@ export function ConsoleViewer({ identifier, serverName }: ConsoleViewerProps) {
     const [stats, setStats] = useState<any>(null)
     const [command, setCommand] = useState("")
     const [loading, setLoading] = useState(false)
+    const [eulaMissing, setEulaMissing] = useState(false)
     const scrollRef = useRef<HTMLDivElement>(null)
     const socketRef = useRef<WebSocket | null>(null)
 
@@ -52,14 +53,10 @@ export function ConsoleViewer({ identifier, serverName }: ConsoleViewerProps) {
                 return
             }
 
-            // Pterodactyl Client API returns { data: { token: "...", socket: "..." } }
-            // Our service returns response.data
-            // So 'data' here is { data: { token: "...", socket: "..." } }
             const socketData = data.data || data;
 
             if (!socketData.socket || !socketData.token) {
                 setLogs(prev => [...prev, "[System] Error: Invalid websocket credentials received"])
-                console.error("Invalid WS Data:", data);
                 return
             }
 
@@ -80,7 +77,6 @@ export function ConsoleViewer({ identifier, serverName }: ConsoleViewerProps) {
                         case "auth success":
                             setLogs(prev => [...prev, "[System] Authentication successful!"])
                             setLogs(prev => [...prev, "[System] ✓ Connected - You'll see new logs as they appear"])
-                            setLogs(prev => [...prev, "[System] Note: Only new server output will show (past logs aren't available)"])
                             // Request initial server status
                             socket.send(JSON.stringify({ event: "send stats" }))
                             break
@@ -88,9 +84,15 @@ export function ConsoleViewer({ identifier, serverName }: ConsoleViewerProps) {
                             setStatus(msg.args[0])
                             break
                         case "console output":
+                            const logLine = msg.args[0];
+                            // Check for EULA message
+                            if (logLine.toLowerCase().includes("you need to agree to the eula in order to run the server")) {
+                                setEulaMissing(true);
+                            }
+
                             // Limit to last 200 lines for performance
                             setLogs(prev => {
-                                const newLogs = [...prev, msg.args[0]];
+                                const newLogs = [...prev, logLine];
                                 if (newLogs.length > 200) {
                                     return newLogs.slice(-200);
                                 }
@@ -113,7 +115,6 @@ export function ConsoleViewer({ identifier, serverName }: ConsoleViewerProps) {
 
             socket.onerror = (error) => {
                 console.error("WebSocket error:", error)
-                setLogs(prev => [...prev, "[System] WebSocket error occurred"])
             }
 
             socket.onclose = (event) => {
@@ -123,10 +124,40 @@ export function ConsoleViewer({ identifier, serverName }: ConsoleViewerProps) {
 
         } catch (error) {
             console.error("WS Error", error)
-            setLogs(prev => [...prev, `[System] Failed to connect: ${error instanceof Error ? error.message : 'Unknown error'}`])
             setTimeout(connectWebsocket, 5000)
         }
     }
+
+    const handleAcceptEula = async () => {
+        setLoading(true);
+        try {
+            // Write eula=true to eula.txt
+            const res = await fetch(`/api/servers/${identifier}/files/write`, {
+                method: "POST",
+                body: JSON.stringify({
+                    file: "eula.txt",
+                    content: "eula=true"
+                }),
+                headers: { "Content-Type": "application/json" }
+            });
+
+            if (!res.ok) {
+                toast.error("Failed to write to eula.txt");
+                setLoading(false);
+                return;
+            }
+
+            toast.success("EULA Accepted! Restarting server...");
+            setEulaMissing(false);
+
+            // Trigger restart
+            await handlePowerAction("restart");
+
+        } catch (error) {
+            toast.error("Failed to accept EULA");
+            setLoading(false);
+        }
+    };
 
     const handlePowerAction = async (action: string) => {
         setLoading(true)
@@ -240,6 +271,28 @@ export function ConsoleViewer({ identifier, serverName }: ConsoleViewerProps) {
                 <Terminal className="h-5 w-5 text-primary" />
                 <h3 className="text-lg font-bold text-white tracking-tight">Console</h3>
             </div>
+
+            {eulaMissing && (
+                <div className="mb-4 bg-amber-500/10 border border-amber-500/50 rounded-xl p-4 flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+                    <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+                            <CheckCircle2 className="h-5 w-5 text-amber-500" />
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-amber-500">EULA Acceptance Required</h4>
+                            <p className="text-sm text-zinc-400">You must accept the Minecraft EULA to run this server.</p>
+                        </div>
+                    </div>
+                    <Button
+                        onClick={handleAcceptEula}
+                        disabled={loading}
+                        className="bg-amber-500 hover:bg-amber-600 text-black font-bold border-none"
+                    >
+                        I Accept (eula=true)
+                    </Button>
+                </div>
+            )}
+
             <div className="relative group">
                 <div className="absolute top-4 right-4 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Button size="sm" variant="outline" className="h-8 bg-zinc-900/80 border-zinc-700 text-white" onClick={() => setLogs([])}>Clear</Button>
