@@ -21,7 +21,7 @@ export default function ServersPage() {
                 </div>
             </div>
 
-            <div className="max-w-4xl">
+            <div>
                 <div className="mb-6">
                     <h2 className="text-3xl font-bold tracking-tight text-white mb-2">Deploy New Server</h2>
                     <p className="text-muted-foreground">

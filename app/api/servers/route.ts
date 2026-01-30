@@ -68,11 +68,32 @@ export async function POST(req: Request) {
 
         // 2. Check Allowed Nodes
         if (settings?.allowedNodes) {
-            const allowedIds = settings.allowedNodes.split(',').map(id => parseInt(id.trim()));
-            if (!allowedIds.includes(nodeId)) {
+            // Parse "1:50, 2:10" or "1, 2"
+            const allowedConfigs = settings.allowedNodes.split(',').map(s => {
+                const part = s.split(':');
+                const id = parseInt(part[0].trim());
+                const limit = part[1] ? parseInt(part[1].trim()) : 9999;
+                return { id, limit };
+            });
+
+            const nodeConfig = allowedConfigs.find(c => c.id === nodeId);
+
+            if (!nodeConfig) {
                 return NextResponse.json({
                     error: 'This node is not available for free server deployment.'
                 }, { status: 403 });
+            }
+
+            // Check Node-Specific Limit (Global Servers on Node)
+            const allocations = await pterodactylService.getAllocations(nodeId);
+
+            // Count how many are currently assigned
+            const currentUsage = allocations.filter(a => a.assigned).length;
+
+            if (currentUsage >= nodeConfig.limit) {
+                return NextResponse.json({
+                    error: `This node has reached its capacity (${nodeConfig.limit} servers). Please choose another node.`
+                }, { status: 400 });
             }
         }
 
