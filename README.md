@@ -51,8 +51,8 @@ sudo npm install -g pm2
 3.  **Configure Environment Variables**
     Copy the example environment file and edit it with your details.
     ```bash
-    cp .env.local.example .env.local
-    nano .env.local
+    cp .env.example .env
+    nano .env
     ```
 
     **Required Variables:**
@@ -61,11 +61,12 @@ sudo npm install -g pm2
     NEXTAUTH_SECRET=generate-a-random-secret-here
 
     # Pterodactyl Details
-    PTERODACTYL_API_URL=https://panel.your-hosting.com
+    PTERODACTYL_API_URL=https://panel.your-hosting.com/api
+    PTERODACTYL_PANEL_URL=https://panel.your-hosting.com
     PTERODACTYL_API_KEY=ptla_your_api_key_here
 
-    # Database (MongoDB)
-    DATABASE_URL="mongodb+srv://..."
+    # Database - SQLite
+    DATABASE_URL="file:./dev.db"
     ```
 
 4.  **Database Migration (Prisma)**
@@ -183,4 +184,4 @@ pm2 restart navdactyl
 ### 🐛 Troubleshooting
 
 *   **Logs**: Check PM2 logs with `pm2 logs navdactyl`.
-*   **Build Errors**: Ensure your server has enough RAM (at least 2GB is recommended for building). providing swap memory can help.
+*   **Build Errors**: Ensure your server has enough RAM (at least 2GB is recommended for building). Providing swap memory can help.
