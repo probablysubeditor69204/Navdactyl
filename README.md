@@ -1,187 +1,154 @@
-# Navdactyl - Modern Pterodactyl Client Dashboard
+# 🦅 Navdactyl - Documentation
 
-A modern, highly customizable client dashboard for Pterodactyl, built with Next.js, TailwindCSS, and Shadcn UI.
+Welcome to the official installation guide for **Navdactyl**, a high-performance, modern client dashboard for Pterodactyl. This guide provide the **recommended** way to host the panel on a production Linux server using Node.js, PM2, and Nginx.
 
 ---
 
-## 🚀 Deployment Guide (Production)
+## 🛠️ Requirements
+*   **OS**: Ubuntu 22.04+ (Recommended) or Debian 11+
+*   **Hardware**: 1 CPU Core, 2GB RAM (Minimum)
+*   **DNS**: A domain pointed to your server IP (e.g., `panel.example.com`)
 
-This guide will walk you through setting up Navdactyl on a Linux server (Ubuntu/Debian recommended) using **Node.js**, **PM2**, and **Nginx** for a production-ready environment.
+---
 
-### 📋 Prerequisites
+## � One-Path Installation Guide
 
-Ensure your server helps the following installed:
-*   **Node.js 18+** (LTS recommended)
-*   **Git**
-*   **Nginx**
-*   **PM2** (Process Manager)
+Follow these steps exactly to get your panel live with Nginx and SSL.
+
+### Step 1: Install System Dependencies
+Update your server and install the core stack (Node.js, NPM, Nginx, and Git).
 
 ```bash
-# Install Node.js & NPM (Ubuntu)
+# Update system
+sudo apt update && sudo apt upgrade -y
+
+# Setup Node.js 20.x
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs
+sudo apt install -y nodejs
 
-# Install Nginx & Git
-sudo apt update
-sudo apt install nginx git -y
-
-# Install PM2 globally
+# Install Nginx, Git, and PM2
+sudo apt install -y nginx git
 sudo npm install -g pm2
 ```
 
 ---
 
-### 🛠️ Installation
+### Step 2: Download & Setup Files
+Clone the code and prepare the environment.
 
-1.  **Clone the Repository**
-    Navigate to your preferred directory (e.g., `/var/www/`) and clone the project.
-    ```bash
-    cd /var/www
-    git clone https://github.com/probablysubeditor69204/Navdactyl.git navdactyl
-    cd navdactyl
-    ```
+```bash
+# Navigate to web root
+cd /var/www
 
-2.  **Install Dependencies**
-    ```bash
-    npm install
-    # or
-    yarn install
-    ```
+# Clone repository
+git clone https://github.com/probablysubeditor69204/Navdactyl.git navdactyl
+cd navdactyl
 
-3.  **Configure Environment Variables**
-    Copy the example environment file and edit it with your details.
-    ```bash
-    cp .env.example .env
-    nano .env
-    ```
-
-    **Required Variables:**
-    ```env
-    NEXTAUTH_URL=https://your-domain.com
-    NEXTAUTH_SECRET=generate-a-random-secret-here
-
-    # Pterodactyl Details
-    PTERODACTYL_API_URL=https://panel.your-hosting.com/api
-    PTERODACTYL_PANEL_URL=https://panel.your-hosting.com
-    PTERODACTYL_API_KEY=ptla_your_api_key_here
-
-    # Database - SQLite
-    DATABASE_URL="file:./dev.db"
-    ```
-
-4.  **Database Migration (Prisma)**
-    Push your schema to the database.
-    ```bash
-    npx prisma generate
-    npx prisma db push
-    ```
-
-5.  **Build the Application**
-    Compile the Next.js application for production.
-    ```bash
-    npm run build
-    ```
+# Install Panel Dependencies
+npm install
+```
 
 ---
 
-### ⚡ Running with PM2
-
-Use PM2 to keep your application running in the background.
+### Step 3: Configuration
+Configure your environmental variables and database.
 
 ```bash
-# Start the application
-pm2 start npm --name "navdactyl" -- start
+# Create environment file
+cp .env.example .env
 
-# Save the PM2 list so it restarts on reboot
+# Edit configuration
+nano .env
+```
+
+**Inside `.env`, make sure to set following:**
+*   `NEXTAUTH_URL`: Your full domain (e.g., `https://panel.example.com`)
+*   `NEXTAUTH_SECRET`: Any random string (used for security)
+*   `PTERODACTYL_PANEL_URL`: Your Pterodactyl Panel URL (e.g., `https://my-ptero.com`)
+*   `PTERODACTYL_API_URL`: Your Pterodactyl Panel API URL (e.g., `https://my-ptero.com/api`)
+*   `PTERODACTYL_API_KEY`: A **Application API** key with full permissions.
+*   `DATABASE_URL`: Keep as `"file:./dev.db"` (Recommended for high performance).
+
+**Initialize Database & Build:**
+```bash
+# Sync database
+npx prisma db push
+npx prisma generate
+
+# Build the dashboard (This may take 1-2 minutes)
+npm run build
+```
+
+---
+
+### Step 4: Go Live with PM2 & Nginx
+Now we make the panel run forever and connect it to the internet.
+
+**Start the Process:**
+```bash
+pm2 start npm --name "navdactyl" -- start
 pm2 save
 pm2 startup
 ```
 
----
+**Configure Nginx:**
+```bash
+# Create Nginx configuration
+sudo nano /etc/nginx/sites-available/navdactyl
+```
 
-### 🌐 Nginx Configuration (Reverse Proxy)
+**Paste this exact block (Replace `your-domain.com` with your real domain):**
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
 
-Set up Nginx to serve your application on port 80/443.
-
-1.  **Create a Config File**
-    ```bash
-    sudo nano /etc/nginx/sites-available/navdactyl
-    ```
-
-2.  **Paste the Configuration**
-    Replace `your-domain.com` with your actual domain.
-
-    ```nginx
-    server {
-        listen 80;
-        server_name your-domain.com;
-
-        location / {
-            proxy_pass http://localhost:3000;
-            proxy_http_version 1.1;
-            proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection 'upgrade';
-            proxy_set_header Host $host;
-            proxy_cache_bypass $http_upgrade;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-        }
-
-        # Optional: Security headers
-        add_header X-Frame-Options "SAMEORIGIN";
-        add_header X-XSS-Protection "1; mode=block";
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
-    ```
+}
+```
 
-3.  **Enable the Site**
-    ```bash
-    sudo ln -s /etc/nginx/sites-available/navdactyl /etc/nginx/sites-enabled/
-    sudo nginx -t  # Test configuration
-    sudo systemctl restart nginx
-    ```
+**Activate Nginx:**
+```bash
+sudo ln -s /etc/nginx/sites-available/navdactyl /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+```
 
 ---
 
-### 🔒 SSL Certificate (HTTPS)
-
-Secure your site with a free Let's Encrypt SSL certificate.
+### Step 5: Secure with SSL (HTTPS)
+SSL is mandatory for security and WebSocket support.
 
 ```bash
 # Install Certbot
-sudo apt install certbot python3-certbot-nginx -y
+sudo apt install -y python3-certbot-nginx
 
-# Obtain Certificate
+# Request Certificate
 sudo certbot --nginx -d your-domain.com
 ```
 
-Follow the prompts to redirect HTTP to HTTPS.
+---
+
+## 🔄 Maintenance Commands
+
+| Action | Command |
+| :--- | :--- |
+| **Update Panel** | `git pull && npm install && npm run build && pm2 restart navdactyl` |
+| **View Logs** | `pm2 logs navdactyl` |
+| **Check Status** | `pm2 status` |
+| **Restart** | `pm2 restart navdactyl` |
 
 ---
 
-### 🔄 Updating
-
-To update the panel to the latest version:
-
-```bash
-cd /var/www/navdactyl
-
-# Pull latest changes
-git pull origin main
-
-# Install new dependencies (if any)
-npm install
-
-# Rebuild the app
-npm run build
-
-# Restart the process
-pm2 restart navdactyl
-```
-
----
-
-### 🐛 Troubleshooting
-
-*   **Logs**: Check PM2 logs with `pm2 logs navdactyl`.
-*   **Build Errors**: Ensure your server has enough RAM (at least 2GB is recommended for building). Providing swap memory can help.
+## 🌟 Support & Credits
+Created with ❤️ by the Navdactyl Team. If you enjoy this project, consider giving it a star on GitHub!
