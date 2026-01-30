@@ -6,6 +6,17 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 interface ConsoleViewerProps {
     identifier: string;
@@ -366,17 +377,30 @@ export function ConsoleViewer({ identifier, serverName }: ConsoleViewerProps) {
                         <p className="text-zinc-400 text-sm">Delete this server permanently.</p>
                         <p className="text-zinc-500 text-xs">This action cannot be undone. All data will be lost.</p>
                     </div>
-                    <Button
-                        variant="destructive"
-                        onClick={() => {
-                            if (confirm(`Are you sure you want to delete ${serverName}? This cannot be undone.`)) {
-                                handleDeleteServer()
-                            }
-                        }}
-                        disabled={loading}
-                    >
-                        Delete Server
-                    </Button>
+
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive" disabled={loading}>
+                                Delete Server
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="bg-zinc-900 border-zinc-800">
+                            <AlertDialogHeader>
+                                <AlertDialogTitle className="text-white">Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription className="text-zinc-400">
+                                    This action cannot be undone. This will permanently delete your server
+                                    <span className="font-bold text-white"> {serverName} </span>
+                                    and remove all data associated with it.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel className="bg-zinc-800 text-white border-zinc-700 hover:bg-zinc-700 hover:text-white">Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDeleteServer} className="bg-red-600 text-white hover:bg-red-700">
+                                    Delete Server
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </div>
             </div>
         </div>

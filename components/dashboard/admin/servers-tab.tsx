@@ -11,6 +11,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 export function ServersTab() {
     const [servers, setServers] = useState<any[]>([])
@@ -42,7 +53,6 @@ export function ServersTab() {
     }, [serverPage])
 
     const handleDeleteServer = async (id: number) => {
-        if (!confirm("Are you sure you want to delete this server? This is permanent!")) return
         setDeletingServerId(id)
         try {
             const res = await fetch(`/api/admin/servers/${id}`, { method: 'DELETE' })
@@ -94,9 +104,27 @@ export function ServersTab() {
                                     </TableCell>
                                     <TableCell className="text-zinc-500 text-xs">Node #{server.node}</TableCell>
                                     <TableCell className="text-right">
-                                        <Button size="icon" variant="ghost" className="text-red-500" onClick={() => handleDeleteServer(server.id)} disabled={deletingServerId === server.id}>
-                                            {deletingServerId === server.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                                        </Button>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button size="icon" variant="ghost" className="text-red-500" disabled={deletingServerId === server.id}>
+                                                    {deletingServerId === server.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent className="bg-zinc-900 border-zinc-800">
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle className="text-white">Delete Server?</AlertDialogTitle>
+                                                    <AlertDialogDescription className="text-zinc-400">
+                                                        This will permanently delete <span className="text-white font-bold">{server.name}</span>. This action is irreversible.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel className="bg-zinc-800 text-white border-zinc-700 hover:bg-zinc-700">Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDeleteServer(server.id)} className="bg-red-600 text-white hover:bg-red-700">
+                                                        Delete
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
                                     </TableCell>
                                 </TableRow>
                             ))

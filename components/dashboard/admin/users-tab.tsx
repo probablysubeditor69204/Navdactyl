@@ -12,6 +12,17 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 export function UsersTab() {
     const [users, setUsers] = useState<any[]>([])
@@ -43,7 +54,6 @@ export function UsersTab() {
     }, [userPage])
 
     const handleDeleteUser = async (id: number) => {
-        if (!confirm("Are you sure you want to delete this user? This cannot be undone.")) return
         setDeletingUserId(id)
         try {
             const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' })
@@ -90,9 +100,27 @@ export function UsersTab() {
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <Button size="icon" variant="ghost" className="text-red-500" onClick={() => handleDeleteUser(user.id)} disabled={deletingUserId === user.id}>
-                                            {deletingUserId === user.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                                        </Button>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button size="icon" variant="ghost" className="text-red-500" disabled={deletingUserId === user.id}>
+                                                    {deletingUserId === user.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent className="bg-zinc-900 border-zinc-800">
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle className="text-white">Delete User?</AlertDialogTitle>
+                                                    <AlertDialogDescription className="text-zinc-400">
+                                                        This will permanently delete <span className="text-white font-bold">{user.username}</span>.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel className="bg-zinc-800 text-white border-zinc-700 hover:bg-zinc-700">Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDeleteUser(user.id)} className="bg-red-600 text-white hover:bg-red-700">
+                                                        Delete
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
                                     </TableCell>
                                 </TableRow>
                             ))
