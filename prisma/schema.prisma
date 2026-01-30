@@ -20,7 +20,30 @@ model User {
   isAdmin           Boolean  @default(false)
   createdAt         DateTime @default(now())
   lastLogin         DateTime @default(now())
+  tickets           Ticket[]
 }
+
+model Ticket {
+  id        String          @id @default(uuid())
+  subject   String
+  status    String          @default("OPEN") // OPEN, CLOSED, ANSWERED
+  userId    String
+  user      User            @relation(fields: [userId], references: [id])
+  messages  TicketMessage[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+model TicketMessage {
+  id        String   @id @default(uuid())
+  content   String
+  isAdmin   Boolean  @default(false)
+  userId    String
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id])
+  createdAt DateTime @default(now())
+}
+
 model Setting {
   id               String   @id @default("site-settings")
   siteTitle        String   @default("Navdactyl")

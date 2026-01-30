@@ -68,9 +68,11 @@ export function Sidebar({ className }: SidebarProps) {
                                     Create Server
                                 </Link>
                             </Button>
-                            <Button variant={pathname === "/dashboard/tickets" ? "secondary" : "ghost"} className="w-full justify-start">
-                                <Ticket className="mr-2 h-4 w-4" />
-                                Tickets
+                            <Button variant={pathname === "/dashboard/tickets" ? "secondary" : "ghost"} className="w-full justify-start" asChild>
+                                <Link href="/dashboard/tickets">
+                                    <Ticket className="mr-2 h-4 w-4" />
+                                    Tickets
+                                </Link>
                             </Button>
                             <Button variant={pathname === "/dashboard/marketplace" ? "secondary" : "ghost"} className="w-full justify-start">
                                 <ShoppingCart className="mr-2 h-4 w-4" />

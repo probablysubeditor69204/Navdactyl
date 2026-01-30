@@ -1,40 +1,41 @@
 "use client"
 
 import { Input } from "@/components/ui/input"
-import { FormField, FormItem, FormControl, FormMessage } from "@/components/ui/form"
-import { Rocket } from "lucide-react"
+import { FormField, FormItem, FormControl, FormMessage, FormLabel } from "@/components/ui/form"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Fingerprint } from "lucide-react"
 
 export function ServerDetailsCard({ form }: { form: any }) {
     return (
-        <div className="space-y-4">
-            <div>
-                <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
-                    <Rocket className="h-5 w-5 text-purple-500" />
-                    Server Identity
-                </h3>
-                <p className="text-sm text-muted-foreground">Give your new server a recognizable name.</p>
-            </div>
-
-            <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+        <Card className="rounded-2xl border-border bg-card shadow-sm overflow-hidden">
+            <CardHeader className="bg-primary/[0.02] border-b border-border/50 pb-6">
+                <div className="flex items-center gap-3 mb-1">
+                    <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                        <Fingerprint className="h-5 w-5" />
+                    </div>
+                    <CardTitle className="text-xl font-bold">Instance Identity</CardTitle>
+                </div>
+                <CardDescription className="text-muted-foreground">General information to identify your instance.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-6">
                 <FormField
                     control={form.control}
                     name="name"
                     render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="space-y-3">
+                            <FormLabel className="text-xs font-extrabold uppercase tracking-widest text-muted-foreground/80">Server Name</FormLabel>
                             <FormControl>
-                                <div className="relative">
-                                    <Input
-                                        placeholder="My Awesome Server"
-                                        {...field}
-                                        className="bg-background border-input text-foreground h-14 px-4 text-lg placeholder:text-muted-foreground/50 focus-visible:ring-blue-500/50"
-                                    />
-                                </div>
+                                <Input
+                                    placeholder="Enter instance name..."
+                                    className="h-11 bg-[#09090b] border-border/50 focus:border-primary/50 transition-colors px-4 font-medium"
+                                    {...field}
+                                />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
-            </div>
-        </div>
+            </CardContent>
+        </Card>
     )
 }

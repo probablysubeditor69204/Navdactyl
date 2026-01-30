@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { toast } from "sonner"
-import { Loader2 } from "lucide-react"
+import { Loader2, Server, Settings } from "lucide-react"
 
 import { Form } from "@/components/ui/form"
 import { ServerDetailsCard } from "@/components/dashboard/create-server/server-details-card"
@@ -32,7 +32,6 @@ export function CreateServerForm() {
 
     const [loadingResources, setLoadingResources] = useState(true)
     const [loadingEggs, setLoadingEggs] = useState(false)
-    // Initialize settings with defaults to avoid flash of undefined content
     const [settings, setSettings] = useState<any>({
         freeServerMemory: 4096,
         freeServerDisk: 10240,
@@ -49,7 +48,8 @@ export function CreateServerForm() {
         },
     })
 
-    // Fetch Initial Resources
+    const watchAll = form.watch();
+
     useEffect(() => {
         async function fetchInitialResources() {
             try {
@@ -67,8 +67,8 @@ export function CreateServerForm() {
                 if (nestsData.nests) setNests(nestsData.nests)
                 if (!settingsData.error) setSettings(prev => ({ ...prev, ...settingsData }))
             } catch (err) {
-                console.error("Failed to fetch dashboard resources", err)
-                toast.error("Could not load deployment resources")
+                console.error("Failed to fetch resources", err)
+                toast.error("Failed to load server options")
             } finally {
                 setLoadingResources(false)
             }
@@ -76,7 +76,6 @@ export function CreateServerForm() {
         fetchInitialResources()
     }, [])
 
-    // Fetch Eggs when Nest changes
     const watchNest = form.watch("nestId")
     useEffect(() => {
         if (!watchNest) return
@@ -91,7 +90,7 @@ export function CreateServerForm() {
                 const data = await res.json()
                 if (data.eggs) setEggs(data.eggs)
             } catch (err) {
-                toast.error("Failed to load software options")
+                toast.error("Failed to load platform software")
             } finally {
                 setLoadingEggs(false)
             }
@@ -114,10 +113,7 @@ export function CreateServerForm() {
             })
 
             const result = await response.json()
-
-            if (!response.ok) {
-                throw new Error(result.error || "Failed to create server")
-            }
+            if (!response.ok) throw new Error(result.error || "Failed to create server")
 
             toast.success("Server deployment initiated!")
             router.push("/dashboard")
@@ -131,16 +127,16 @@ export function CreateServerForm() {
 
     if (loadingResources) {
         return (
-            <div className="flex h-[400px] w-full items-center justify-center rounded-lg border border-border bg-card/50">
-                <div className="flex flex-col items-center gap-4 text-muted-foreground">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    <p className="text-sm font-medium">Initializing Deployment System...</p>
+            <div className="flex h-[450px] w-full flex-col items-center justify-center rounded-2xl border border-border bg-card shadow-sm">
+                <div className="bg-primary/5 p-4 rounded-full mb-4">
+                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
                 </div>
+                <h3 className="text-white font-bold text-lg mb-1">Loading Options</h3>
+                <p className="text-muted-foreground text-sm">Initializing deployment configurator...</p>
             </div>
         )
     }
 
-    // Filter Allowed Nodes Logic
     const allowedNodesList = nodes.filter(node => {
         if (!settings?.allowedNodes) return true;
         const allowedIds = settings.allowedNodes.split(',').map((s: string) => {
@@ -152,12 +148,24 @@ export function CreateServerForm() {
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-10">
+                <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-border pb-8 gap-4">
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-primary font-bold text-[10px] uppercase tracking-widest mb-2">
+                            <Server className="h-3 w-3" />
+                            Configurator
+                        </div>
+                        <h1 className="text-4xl font-extrabold text-white tracking-tight">Deploy Instance</h1>
+                        <p className="text-muted-foreground text-sm font-medium">Configure your new high-performance cloud server.</p>
+                    </div>
+                    <div className="flex items-center gap-3 bg-card border border-border px-4 py-2.5 rounded-xl shadow-sm">
+                        <Settings className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-xs font-bold text-white uppercase tracking-tight">API Integrated</span>
+                    </div>
+                </div>
 
                 <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-
-                    {/* Left Column: Configuration Components */}
-                    <div className="space-y-6 lg:col-span-2">
+                    <div className="space-y-10 lg:col-span-2">
                         <ServerDetailsCard form={form} />
                         <LocationSelector form={form} nodes={allowedNodesList} />
                         <SoftwareSelector
@@ -169,11 +177,9 @@ export function CreateServerForm() {
                         />
                     </div>
 
-                    {/* Right Column: Allocation Summary */}
                     <div className="lg:col-span-1">
-                        <AllocationSummarySidebar settings={settings} isLoading={isLoading} />
+                        <AllocationSummarySidebar settings={settings} isLoading={isLoading} watchAll={watchAll} />
                     </div>
-
                 </div>
             </form>
         </Form>

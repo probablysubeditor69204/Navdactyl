@@ -10,6 +10,7 @@ import { UsersTab } from "@/components/dashboard/admin/users-tab"
 import { ServersTab } from "@/components/dashboard/admin/servers-tab"
 import { FreeTierTab } from "@/components/dashboard/admin/free-tier-tab"
 import { SettingsTab } from "@/components/dashboard/admin/settings-tab"
+import { TicketsTab } from "@/components/dashboard/admin/tickets-tab"
 
 export default function AdminDashboardPage() {
     const [stats, setStats] = useState<any>(null)
@@ -68,6 +69,7 @@ export default function AdminDashboardPage() {
                     <TabsTrigger className="px-6 py-2.5" value="users">Manage Users</TabsTrigger>
                     <TabsTrigger className="px-6 py-2.5" value="servers">Manage Servers</TabsTrigger>
                     <TabsTrigger className="px-6 py-2.5" value="free-tier">Free Tier</TabsTrigger>
+                    <TabsTrigger className="px-6 py-2.5" value="tickets">Support Tickets</TabsTrigger>
                     <TabsTrigger className="px-6 py-2.5" value="settings">Platform Settings</TabsTrigger>
                 </TabsList>
 
@@ -89,6 +91,10 @@ export default function AdminDashboardPage() {
 
                 <TabsContent value="settings">
                     <SettingsTab />
+                </TabsContent>
+
+                <TabsContent value="tickets">
+                    <TicketsTab />
                 </TabsContent>
             </Tabs>
         </div>

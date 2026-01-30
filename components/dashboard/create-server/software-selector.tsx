@@ -1,8 +1,10 @@
 "use client"
 
-import { Database, Box, Layers } from "lucide-react"
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
+import { Database, Box, Layers, Cpu, Code2, Loader2 } from "lucide-react"
+import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
 
 interface SoftwareSelectorProps {
     form: any
@@ -14,40 +16,44 @@ interface SoftwareSelectorProps {
 
 export function SoftwareSelector({ form, nests, eggs, loadingEggs, watchNest }: SoftwareSelectorProps) {
     return (
-        <div className="space-y-4">
-            <div>
-                <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
-                    <Layers className="h-5 w-5 text-emerald-500" />
-                    Software Platform
-                </h3>
-                <p className="text-sm text-muted-foreground">Choose the game engine and version you want to run.</p>
-            </div>
-
-            <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="rounded-2xl border-border bg-card shadow-sm overflow-hidden">
+            <CardHeader className="bg-primary/[0.02] border-b border-border/50 pb-6">
+                <div className="flex items-center gap-3 mb-1">
+                    <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                        <Layers className="h-5 w-5" />
+                    </div>
+                    <CardTitle className="text-xl font-bold">Platform Configuration</CardTitle>
+                </div>
+                <CardDescription className="text-muted-foreground">Select the software environment for your server.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-6 pt-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <FormField
                         control={form.control}
                         name="nestId"
                         render={({ field }) => (
-                            <FormItem>
-                                <FormLabel className="text-muted-foreground flex items-center gap-2">
-                                    <Box className="h-3 w-3" /> Category
+                            <FormItem className="space-y-3">
+                                <FormLabel className="text-xs font-extrabold uppercase tracking-widest text-muted-foreground/80 flex items-center gap-2">
+                                    <Box className="h-3.5 w-3.5" /> Category
                                 </FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select onValueChange={field.onChange} value={field.value}>
                                     <FormControl>
-                                        <SelectTrigger className="bg-background border-input text-foreground h-12">
-                                            <SelectValue placeholder="Select Category" />
+                                        <SelectTrigger className="h-11 bg-[#09090b] border-border/50 focus:border-primary/50 transition-colors px-4 font-semibold group">
+                                            <SelectValue placeholder="Select Platform Type" />
                                         </SelectTrigger>
                                     </FormControl>
-                                    <SelectContent className="bg-card border-border text-foreground">
+                                    <SelectContent className="bg-[#18181b] border-border text-white rounded-xl shadow-2xl">
                                         {nests.map((nest) => (
-                                            <SelectItem key={nest.id} value={nest.id.toString()}>
-                                                {nest.name}
+                                            <SelectItem key={nest.id} value={nest.id.toString()} className="rounded-lg focus:bg-primary/10 focus:text-primary py-2.5 font-medium cursor-pointer">
+                                                <div className="flex items-center gap-2">
+                                                    <Cpu className="h-4 w-4 opacity-40" />
+                                                    {nest.name}
+                                                </div>
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                <FormMessage />
+                                <FormMessage className="text-xs" />
                             </FormItem>
                         )}
                     />
@@ -56,34 +62,44 @@ export function SoftwareSelector({ form, nests, eggs, loadingEggs, watchNest }: 
                         control={form.control}
                         name="eggId"
                         render={({ field }) => (
-                            <FormItem>
-                                <FormLabel className="text-muted-foreground flex items-center gap-2">
-                                    <Database className="h-3 w-3" /> Engine Version
+                            <FormItem className="space-y-3">
+                                <FormLabel className="text-xs font-extrabold uppercase tracking-widest text-muted-foreground/80 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Code2 className="h-3.5 w-3.5" /> Software
+                                    </div>
+                                    {loadingEggs && <Loader2 className="h-3 w-3 animate-spin text-primary" />}
                                 </FormLabel>
                                 <Select
                                     onValueChange={field.onChange}
-                                    defaultValue={field.value}
+                                    value={field.value}
                                     disabled={!watchNest || loadingEggs}
                                 >
                                     <FormControl>
-                                        <SelectTrigger className="bg-background border-input text-foreground h-12 disabled:opacity-50">
-                                            <SelectValue placeholder={loadingEggs ? "Loading..." : "Select Version"} />
+                                        <SelectTrigger className={cn(
+                                            "h-11 bg-[#09090b] border-border/50 focus:border-primary/50 transition-colors px-4 font-semibold opacity-100",
+                                            (!watchNest || loadingEggs) && "opacity-40 cursor-not-allowed"
+                                        )}>
+                                            <SelectValue placeholder={loadingEggs ? "Loading platform..." : "Select Software"} />
                                         </SelectTrigger>
                                     </FormControl>
-                                    <SelectContent className="bg-card border-border text-foreground">
+                                    <SelectContent className="bg-[#18181b] border-border text-white rounded-xl shadow-2xl">
                                         {eggs.map((egg) => (
-                                            <SelectItem key={egg.id} value={egg.id.toString()}>
-                                                {egg.name}
+                                            <SelectItem key={egg.id} value={egg.id.toString()} className="rounded-lg focus:bg-primary/10 focus:text-primary py-2.5 font-medium cursor-pointer">
+                                                <div className="flex items-center gap-2">
+                                                    <Database className="h-4 w-4 opacity-40" />
+                                                    {egg.name}
+                                                </div>
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                <FormMessage />
+                                {!watchNest && <FormDescription className="text-[10px] text-muted-foreground/40 italic uppercase mt-1">Select category first</FormDescription>}
+                                <FormMessage className="text-xs" />
                             </FormItem>
                         )}
                     />
                 </div>
-            </div>
-        </div>
+            </CardContent>
+        </Card>
     )
 }
