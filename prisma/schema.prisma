@@ -1,0 +1,44 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String   @id @default(uuid())
+  email             String   @unique
+  password          String
+  username          String   @unique
+  pterodactylUserId Int
+  pterodactylUuid   String
+  isAdmin           Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  lastLogin         DateTime @default(now())
+}
+model Setting {
+  id               String   @id @default("site-settings")
+  siteTitle        String   @default("Navdactyl")
+  siteDescription String   @default("Premium Pterodactyl Client Portal")
+  faviconUrl       String   @default("/favicon.ico")
+  dashboardGreeting String   @default("Welcome to Navdactyl Dashboard. Happy Hosting!")
+  announcementText String   @default("Welcome to Subdactyl Dashboard. Happy Hosting!")
+  showAnnouncement Boolean  @default(true)
+  turnstileEnabled  Boolean  @default(false)
+  turnstileSiteKey  String?
+  turnstileSecretKey String?
+  
+  // Free Server Defaults
+  freeServerMemory Int     @default(4096)
+  freeServerDisk   Int     @default(10240)
+  freeServerCpu    Int     @default(100)
+  serverLimit      Int     @default(2)
+  allowedNodes     String  @default("") // Comma separated IDs: "1,2,3"
+  
+  updatedAt        DateTime @updatedAt
+}
