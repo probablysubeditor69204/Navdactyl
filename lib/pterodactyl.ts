@@ -344,6 +344,92 @@ class PterodactylService {
             throw new Error('Failed to delete server from Pterodactyl');
         }
     }
+    private async getAccountKey(): Promise<string> {
+        if (process.env.PTERODACTYL_ACCOUNT_KEY) return process.env.PTERODACTYL_ACCOUNT_KEY;
+
+        // Dynamic import to avoid circular dependencies if any
+        const { prisma } = await import('@/lib/prisma');
+        const settings = await prisma.setting.findUnique({ where: { id: 'site-settings' } });
+
+        if (settings?.pterodactylAccountKey) return settings.pterodactylAccountKey;
+
+        throw new Error("Pterodactyl Account Key (ptlc_) is not configured in Admin Panel or ENV.");
+    }
+
+    async getWebsocketCredentials(serverIdentifier: string): Promise<{ data: { token: string; socket: string } }> {
+        const accountKey = await this.getAccountKey();
+
+        // Robust Client API URL construction
+        const appUrl = process.env.PTERODACTYL_API_URL || '';
+        const baseUrl = new URL(appUrl);
+        const clientBaseUrl = `${baseUrl.protocol}//${baseUrl.host}/api/client`;
+
+        const client = axios.create({
+            baseURL: clientBaseUrl,
+            headers: {
+                'Authorization': `Bearer ${accountKey}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+        });
+
+        try {
+            const response = await client.get(`/servers/${serverIdentifier}/websocket`);
+            return response.data;
+        } catch (error: any) {
+            console.error('Pterodactyl Websocket Error:', error.response?.data || error.message);
+            throw new Error('Failed to fetch websocket credentials');
+        }
+    }
+
+    async sendPowerAction(serverIdentifier: string, signal: 'start' | 'stop' | 'restart' | 'kill'): Promise<void> {
+        const accountKey = await this.getAccountKey();
+
+        // Robust Client API URL construction
+        const appUrl = process.env.PTERODACTYL_API_URL || '';
+        const baseUrl = new URL(appUrl);
+        const clientBaseUrl = `${baseUrl.protocol}//${baseUrl.host}/api/client`;
+
+        const client = axios.create({
+            baseURL: clientBaseUrl,
+            headers: {
+                'Authorization': `Bearer ${accountKey}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+        });
+
+        try {
+            await client.post(`/servers/${serverIdentifier}/power`, { signal });
+        } catch (error: any) {
+            console.error('Pterodactyl Power Action Error:', error.response?.data || error.message);
+            throw new Error(`Failed to send power action: ${signal}`);
+        }
+    }
+
+    async sendCommand(serverIdentifier: string, command: string): Promise<void> {
+        const accountKey = await this.getAccountKey();
+
+        const appUrl = process.env.PTERODACTYL_API_URL || '';
+        const baseUrl = new URL(appUrl);
+        const clientBaseUrl = `${baseUrl.protocol}//${baseUrl.host}/api/client`;
+
+        const client = axios.create({
+            baseURL: clientBaseUrl,
+            headers: {
+                'Authorization': `Bearer ${accountKey}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+        });
+
+        try {
+            await client.post(`/servers/${serverIdentifier}/command`, { command });
+        } catch (error: any) {
+            console.error('Pterodactyl Command Error:', error.response?.data || error.message);
+            throw new Error('Failed to send command');
+        }
+    }
 }
 
 let pterodactylServiceInstance: PterodactylService | null = null;

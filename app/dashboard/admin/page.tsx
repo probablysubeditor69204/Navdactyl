@@ -37,6 +37,7 @@ export default function AdminDashboardPage() {
     const [settingsLoading, setSettingsLoading] = useState(false)
     const [settingsUrl, setSettingsUrl] = useState("")
     const [settingsKey, setSettingsKey] = useState("")
+    const [pterodactylAccountKey, setPterodactylAccountKey] = useState("")
     const [siteTitle, setSiteTitle] = useState("")
     const [siteDescription, setSiteDescription] = useState("")
     const [faviconUrl, setFaviconUrl] = useState("")
@@ -145,6 +146,7 @@ export default function AdminDashboardPage() {
                 setFreeServerCpu(data.freeServerCpu || 100)
                 setServerLimit(data.serverLimit || 2)
                 setAllowedNodes(data.allowedNodes || "")
+                setPterodactylAccountKey(data.pterodactylAccountKey || "")
             }
         } catch (error) {
             console.error("Failed to fetch site settings", error)
@@ -219,7 +221,8 @@ export default function AdminDashboardPage() {
                     freeServerDisk: Number(freeServerDisk),
                     freeServerCpu: Number(freeServerCpu),
                     serverLimit: Number(serverLimit),
-                    allowedNodes
+                    allowedNodes,
+                    pterodactylAccountKey
                 }),
                 headers: { "Content-Type": "application/json" }
             })
@@ -567,8 +570,13 @@ export default function AdminDashboardPage() {
                                         <Input value={settingsUrl} onChange={(e) => setSettingsUrl(e.target.value)} className="bg-[#09090b] border-[#27272a]" />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="text-zinc-400 text-xs">Application API Key</Label>
-                                        <Input type="password" placeholder="Key hidden for security" value={settingsKey} onChange={(e) => setSettingsKey(e.target.value)} className="bg-[#09090b] border-[#27272a]" />
+                                        <Label className="text-zinc-400 text-xs">Application API Key (User Management)</Label>
+                                        <Input type="password" placeholder="ptla_..." value={settingsKey} onChange={(e) => setSettingsKey(e.target.value)} className="bg-[#09090b] border-[#27272a]" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-zinc-400 text-xs">Account API Key (Console & Power Actions)</Label>
+                                        <Input type="password" placeholder="ptlc_..." value={pterodactylAccountKey} onChange={(e) => setPterodactylAccountKey(e.target.value)} className="bg-[#09090b] border-[#27272a]" />
+                                        <p className="text-[10px] text-zinc-500">Required for live console and power actions. Create in Panel Account Settings.</p>
                                     </div>
                                     <Button type="submit" disabled={settingsLoading} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
                                         {settingsLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}

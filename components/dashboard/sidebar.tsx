@@ -119,11 +119,7 @@ export function Sidebar({ className }: SidebarProps) {
             </div>
 
             {/* Logo at Bottom */}
-            <div className="p-4 border-t border-[#27272a] flex items-center justify-center">
-                <div className="h-10 w-10 rounded-full border border-[#27272a] bg-[#09090b] flex items-center justify-center">
-                    <span className="font-bold text-lg text-white">N</span>
-                </div>
-            </div>
+
         </div>
     )
 }

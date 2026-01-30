@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { Server, Loader2, ExternalLink, Cpu, HardDrive } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -84,10 +85,10 @@ export function InstancesList({ servers, loading }: InstancesListProps) {
                             </div>
 
                             <Button variant="outline" size="sm" className="w-full text-xs font-semibold bg-transparent hover:bg-primary/10 hover:text-primary hover:border-primary/50" asChild>
-                                <a href={`https://${process.env.NEXT_PUBLIC_PTERODACTYL_URL || 'panel.example.com'}/server/${server.identifier}`} target="_blank" rel="noopener noreferrer">
+                                <Link href={`/dashboard/servers/${server.identifier}`}>
                                     Control Panel
                                     <ExternalLink className="ml-2 h-3 w-3 outline-none" />
-                                </a>
+                                </Link>
                             </Button>
                         </div>
                     ))}

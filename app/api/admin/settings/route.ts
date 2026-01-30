@@ -46,6 +46,7 @@ export async function POST(request: Request) {
                 freeServerCpu: data.freeServerCpu,
                 serverLimit: data.serverLimit,
                 allowedNodes: data.allowedNodes,
+                pterodactylAccountKey: data.pterodactylAccountKey,
             },
             create: {
                 id: 'site-settings',
@@ -63,6 +64,7 @@ export async function POST(request: Request) {
                 freeServerCpu: data.freeServerCpu ?? 100,
                 serverLimit: data.serverLimit ?? 2,
                 allowedNodes: data.allowedNodes || "",
+                pterodactylAccountKey: data.pterodactylAccountKey || "",
             }
         });
 

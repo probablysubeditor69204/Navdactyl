@@ -38,7 +38,8 @@ model Setting {
   freeServerDisk   Int     @default(10240)
   freeServerCpu    Int     @default(100)
   serverLimit      Int     @default(2)
-  allowedNodes     String  @default("") // Comma separated IDs: "1,2,3"
+  allowedNodes     String? // Comma separated IDs: "1,2,3"
+  pterodactylAccountKey String?
   
   updatedAt        DateTime @updatedAt
 }

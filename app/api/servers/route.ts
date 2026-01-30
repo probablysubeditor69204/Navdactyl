@@ -105,7 +105,7 @@ export async function POST(req: Request) {
             name,
             user: pteroId,
             egg: eggId,
-            docker_image: egg.docker_image,
+            docker_image: "ghcr.io/pterodactyl/yolks:java_21",
             startup: egg.startup,
             limits: {
                 memory: settings?.freeServerMemory ?? 4096,
