@@ -67,6 +67,7 @@ export const authOptions: NextAuthOptions = {
                     email: user.email,
                     name: user.username,
                     isAdmin: user.isAdmin,
+                    avatarUrl: user.avatarUrl,
                 };
             },
         }),
@@ -80,14 +81,25 @@ export const authOptions: NextAuthOptions = {
             if (user) {
                 token.id = user.id;
                 token.isAdmin = (user as any).isAdmin;
-            } else if (token.id) {
-                // Periodically or on every request (matched by middleware), ensure isAdmin is accurate
+                token.avatarUrl = (user as any).avatarUrl;
+            }
+
+            if (trigger === "update" && session?.user) {
+                if (session.user.name) token.name = session.user.name;
+                if (session.user.email) token.email = session.user.email;
+                if (session.user.avatarUrl) token.avatarUrl = session.user.avatarUrl;
+            }
+
+            // Periodically refresh data from DB
+            if (token.id) {
                 const dbUser = await prisma.user.findUnique({
                     where: { id: token.id as string },
-                    select: { isAdmin: true }
+                    select: { isAdmin: true, avatarUrl: true, username: true }
                 });
                 if (dbUser) {
                     token.isAdmin = dbUser.isAdmin;
+                    token.avatarUrl = dbUser.avatarUrl;
+                    token.name = dbUser.username;
                 }
             }
             return token;
@@ -99,7 +111,7 @@ export const authOptions: NextAuthOptions = {
                 });
 
                 if (user) {
-                    // Sync isAdmin status from Pterodactyl if not already synced or periodically
+                    // Sync isAdmin status from Pterodactyl
                     try {
                         const pteroUser = await pterodactylService.getUserByEmail(user.email);
                         if (pteroUser && pteroUser.root_admin !== user.isAdmin) {
@@ -117,6 +129,7 @@ export const authOptions: NextAuthOptions = {
                     (session.user as any).pteroId = user.pterodactylUserId;
                     (session.user as any).pteroUuid = user.pterodactylUuid;
                     (session.user as any).isAdmin = user.isAdmin;
+                    (session.user as any).avatarUrl = user.avatarUrl;
                     session.user!.email = user.email;
                 }
             }

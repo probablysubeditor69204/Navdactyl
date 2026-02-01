@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Plus, MessageSquare, Clock, Loader2, Send } from "lucide-react"
+import { Plus, MessageSquare, Clock, Loader2, Send, ChevronRight, Inbox, Search } from "lucide-react"
 import { toast } from "sonner"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -44,6 +44,7 @@ export default function TicketsPage() {
     const [loading, setLoading] = useState(true)
     const [isCreating, setIsCreating] = useState(false)
     const [open, setOpen] = useState(false)
+    const [searchTerm, setSearchTerm] = useState("")
 
     const form = useForm<TicketValues>({
         resolver: zodResolver(ticketSchema),
@@ -99,35 +100,39 @@ export default function TicketsPage() {
         switch (status) {
             case "OPEN":
                 return (
-                    <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                        <div className="h-1.5 w-1.5 rounded-full bg-blue-500 mr-1.5 animate-pulse" />
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 text-[10px] font-bold uppercase tracking-wider border border-blue-500/20">
+                        <div className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
                         Open
-                    </Badge>
+                    </div>
                 )
             case "ANSWERED":
                 return (
-                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                        <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 mr-1.5" />
-                        Answered
-                    </Badge>
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20">
+                        <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                        Staff Reply
+                    </div>
                 )
             case "CLOSED":
                 return (
-                    <Badge variant="outline" className="bg-zinc-500/10 text-zinc-500 border-zinc-500/20 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                        <div className="h-1.5 w-1.5 rounded-full bg-zinc-500 mr-1.5" />
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-zinc-500/10 text-zinc-500 text-[10px] font-bold uppercase tracking-wider border border-zinc-500/20">
+                        <div className="h-1.5 w-1.5 rounded-full bg-zinc-500" />
                         Closed
-                    </Badge>
+                    </div>
                 )
             default:
                 return null
         }
     }
 
+    const filteredTickets = tickets.filter(t =>
+        t.subject.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+
     return (
         <div className="space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-white font-medium">
+                <div className="flex items-center gap-2 text-white font-medium text-lg">
                     <MessageSquare className="h-5 w-5" />
                     <h3>Support Tickets ( {tickets.length} )</h3>
                 </div>
@@ -139,25 +144,25 @@ export default function TicketsPage() {
                             New Ticket
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="bg-[#18181b] border-[#27272a] sm:max-w-[525px]">
+                    <DialogContent className="bg-[#18181b] border-[#27272a] sm:max-w-[500px] rounded-xl">
                         <DialogHeader>
-                            <DialogTitle className="text-xl font-bold text-white">Create Support Ticket</DialogTitle>
-                            <DialogDescription className="text-muted-foreground">
-                                Describe your issue and we'll get back to you soon.
+                            <DialogTitle className="text-xl font-bold text-white">New Support Ticket</DialogTitle>
+                            <DialogDescription className="text-muted-foreground text-sm">
+                                Please provide as much detail as possible so we can help you faster.
                             </DialogDescription>
                         </DialogHeader>
                         <Form {...form}>
-                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
+                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
                                 <FormField
                                     control={form.control}
                                     name="subject"
                                     render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel className="text-white">Subject</FormLabel>
+                                        <FormItem className="space-y-1.5">
+                                            <FormLabel className="text-zinc-400 text-xs font-bold uppercase">Subject</FormLabel>
                                             <FormControl>
                                                 <Input
-                                                    placeholder="Brief description of your issue"
-                                                    className="bg-[#09090b] border-[#27272a] text-white h-11"
+                                                    placeholder="What's the issue?"
+                                                    className="bg-[#09090b] border-border text-white h-11 rounded-lg"
                                                     {...field}
                                                 />
                                             </FormControl>
@@ -169,12 +174,12 @@ export default function TicketsPage() {
                                     control={form.control}
                                     name="message"
                                     render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel className="text-white">Message</FormLabel>
+                                        <FormItem className="space-y-1.5">
+                                            <FormLabel className="text-zinc-400 text-xs font-bold uppercase">Description</FormLabel>
                                             <FormControl>
                                                 <Textarea
-                                                    placeholder="Detailed explanation of your problem..."
-                                                    className="min-h-[150px] bg-[#09090b] border-[#27272a] text-white resize-none"
+                                                    placeholder="Provide details about your problem..."
+                                                    className="min-h-[150px] bg-[#09090b] border-border text-white rounded-lg resize-none p-4"
                                                     {...field}
                                                 />
                                             </FormControl>
@@ -182,19 +187,9 @@ export default function TicketsPage() {
                                         </FormItem>
                                     )}
                                 />
-                                <DialogFooter>
+                                <DialogFooter className="pt-2">
                                     <Button type="submit" disabled={isCreating} className="w-full font-bold h-11">
-                                        {isCreating ? (
-                                            <>
-                                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                                Creating...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Send className="h-4 w-4 mr-2" />
-                                                Submit Ticket
-                                            </>
-                                        )}
+                                        {isCreating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Open Ticket"}
                                     </Button>
                                 </DialogFooter>
                             </form>
@@ -203,44 +198,60 @@ export default function TicketsPage() {
                 </Dialog>
             </div>
 
-            {/* Tickets Grid */}
-            {loading ? (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {[1, 2, 3].map((i) => (
-                        <div key={i} className="h-[140px] rounded-xl border border-border bg-card animate-pulse" />
-                    ))}
+            {/* List */}
+            <div className="space-y-4">
+                {/* Search */}
+                <div className="flex items-center gap-4 bg-card border border-border px-4 py-2 rounded-xl">
+                    <Search className="h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Search your tickets..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="bg-transparent border-0 h-9 p-0 focus-visible:ring-0 text-white placeholder:text-muted-foreground/50"
+                    />
                 </div>
-            ) : tickets.length === 0 ? (
-                <div className="rounded-xl border border-border bg-card p-12 flex flex-col items-center justify-center text-center shadow-sm min-h-[200px]">
-                    <MessageSquare className="h-12 w-12 text-muted-foreground mb-4 opacity-20" />
-                    <p className="text-muted-foreground">No tickets yet. Create one if you need help!</p>
-                </div>
-            ) : (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {tickets.map((ticket) => (
-                        <Link key={ticket.id} href={`/dashboard/tickets/${ticket.id}`} className="group">
-                            <div className="rounded-xl border border-border bg-card p-6 shadow-sm hover:border-primary/50 transition-all duration-300">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                                        <MessageSquare className="h-6 w-6" />
+
+                {loading ? (
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {[1, 2, 3].map((i) => (
+                            <div key={i} className="h-40 rounded-xl border border-border bg-card animate-pulse" />
+                        ))}
+                    </div>
+                ) : filteredTickets.length === 0 ? (
+                    <div className="rounded-xl border border-border bg-card p-12 flex flex-col items-center justify-center text-center shadow-sm min-h-[200px]">
+                        <Inbox className="h-10 w-10 text-muted-foreground/20 mb-4" />
+                        <p className="text-muted-foreground">No tickets found.</p>
+                    </div>
+                ) : (
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {filteredTickets.map((ticket) => (
+                            <Link key={ticket.id} href={`/dashboard/tickets/${ticket.id}`} className="group block">
+                                <div className="rounded-xl border border-border bg-card p-6 shadow-sm hover:border-primary/50 transition-all duration-300">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                                            <MessageSquare className="h-6 w-6" />
+                                        </div>
+                                        {getStatusBadge(ticket.status)}
                                     </div>
-                                    {getStatusBadge(ticket.status)}
-                                </div>
 
-                                <h4 className="text-white font-bold text-lg mb-1 truncate">{ticket.subject}</h4>
-                                <p className="text-muted-foreground text-xs mb-4 line-clamp-2">
-                                    {ticket.messages?.[0]?.content || 'No messages yet'}
-                                </p>
+                                    <h4 className="text-white font-bold text-lg mb-1 truncate group-hover:text-primary transition-colors">{ticket.subject}</h4>
+                                    <p className="text-muted-foreground text-xs mb-6 line-clamp-1">
+                                        {ticket.messages?.[0]?.content}
+                                    </p>
 
-                                <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-bold uppercase">
-                                    <Clock className="h-3 w-3" />
-                                    {new Date(ticket.updatedAt).toLocaleDateString()}
+                                    <div className="flex items-center justify-between pt-4 border-t border-border/50">
+                                        <div className="flex items-center gap-1.5 text-muted-foreground text-[10px] font-bold uppercase tracking-wider">
+                                            <Clock className="h-3 w-3" />
+                                            Active {new Date(ticket.updatedAt).toLocaleDateString()}
+                                        </div>
+                                        <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
+                                    </div>
                                 </div>
-                            </div>
-                        </Link>
-                    ))}
-                </div>
-            )}
+                            </Link>
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     )
 }

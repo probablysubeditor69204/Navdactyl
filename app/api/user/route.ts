@@ -87,7 +87,8 @@ export async function PATCH(req: Request) {
             user: {
                 id: updatedUser.id,
                 email: updatedUser.email,
-                username: updatedUser.username
+                username: updatedUser.username,
+                avatarUrl: updatedUser.avatarUrl
             }
         });
 

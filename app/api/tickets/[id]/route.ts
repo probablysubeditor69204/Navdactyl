@@ -24,12 +24,21 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             where: { id },
             include: {
                 messages: {
-                    orderBy: { createdAt: 'asc' }
+                    orderBy: { createdAt: 'asc' },
+                    include: {
+                        user: {
+                            select: {
+                                username: true,
+                                avatarUrl: true
+                            }
+                        }
+                    }
                 },
                 user: {
                     select: {
                         username: true,
-                        email: true
+                        email: true,
+                        avatarUrl: true
                     }
                 }
             }

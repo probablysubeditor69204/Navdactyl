@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
-import { Loader2, User, Lock, Save, ShieldCheck } from "lucide-react"
+import { Loader2, User, Lock, Save, ShieldCheck, Camera } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -28,6 +28,7 @@ import {
     FormMessage,
 } from "@/components/ui/form"
 import { Separator } from "@/components/ui/separator"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 const profileFormSchema = z.object({
     username: z.string().min(3).max(60).optional(),
@@ -42,6 +43,8 @@ export default function AccountPage() {
     const { data: session, update } = useSession()
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+    const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
     const form = useForm<ProfileFormValues>({
         resolver: zodResolver(profileFormSchema),
@@ -53,20 +56,52 @@ export default function AccountPage() {
         },
     })
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            if (file.size > 2 * 1024 * 1024) {
+                toast.error("Image must be less than 2MB")
+                return
+            }
+            setSelectedFile(file)
+            const reader = new FileReader()
+            reader.onloadend = () => {
+                setPreviewUrl(reader.result as string)
+            }
+            reader.readAsDataURL(file)
+        }
+    }
+
     async function onSubmit(data: ProfileFormValues) {
         setIsLoading(true)
 
-        const payload: any = {
-            username: data.username,
-            email: data.email,
-        }
-
-        if (data.newPassword) {
-            payload.password = data.newPassword
-            payload.currentPassword = data.currentPassword
-        }
-
         try {
+            // First, If there is a file, upload it
+            let avatarUrl = (session?.user as any)?.avatarUrl;
+            if (selectedFile) {
+                const formData = new FormData()
+                formData.append('file', selectedFile)
+
+                const uploadRes = await fetch('/api/user/profile', {
+                    method: 'POST',
+                    body: formData,
+                })
+                const uploadData = await uploadRes.json()
+                if (!uploadRes.ok) throw new Error(uploadData.error || "Avatar upload failed")
+                avatarUrl = uploadData.user.avatarUrl;
+            }
+
+            // Then, update profile info
+            const payload: any = {
+                username: data.username,
+                email: data.email,
+            }
+
+            if (data.newPassword) {
+                payload.password = data.newPassword
+                payload.currentPassword = data.currentPassword
+            }
+
             const response = await fetch("/api/user", {
                 method: "PATCH",
                 headers: {
@@ -88,7 +123,8 @@ export default function AccountPage() {
                 user: {
                     ...session?.user,
                     name: data.username,
-                    email: data.email
+                    email: data.email,
+                    avatarUrl: avatarUrl
                 }
             })
 
@@ -97,6 +133,8 @@ export default function AccountPage() {
                 currentPassword: "",
                 newPassword: "",
             })
+            setSelectedFile(null)
+            setPreviewUrl(null)
 
             router.refresh()
 
@@ -131,7 +169,36 @@ export default function AccountPage() {
                                     Update your public display name and email address.
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent className="space-y-4">
+                            <CardContent className="space-y-6">
+                                {/* Avatar Section */}
+                                <div className="flex items-center gap-6 pb-2">
+                                    <div className="relative group">
+                                        <Avatar className="h-20 w-20 border-2 border-border bg-[#09090b]">
+                                            <AvatarImage src={previewUrl || (session?.user as any)?.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${session?.user?.name}`} />
+                                            <AvatarFallback className="text-xl font-bold uppercase">
+                                                {session?.user?.name?.substring(0, 2)}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <label
+                                            htmlFor="avatar-upload"
+                                            className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"
+                                        >
+                                            <Camera className="h-5 w-5 text-white" />
+                                            <input
+                                                id="avatar-upload"
+                                                type="file"
+                                                className="hidden"
+                                                accept="image/*"
+                                                onChange={handleFileChange}
+                                            />
+                                        </label>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h4 className="text-sm font-bold text-white uppercase italic">Profile Picture</h4>
+                                        <p className="text-xs text-muted-foreground">Click the image to upload a new avatar. Max size 2MB.</p>
+                                    </div>
+                                </div>
+
                                 <FormField
                                     control={form.control}
                                     name="username"
@@ -239,4 +306,3 @@ export default function AccountPage() {
         </div>
     )
 }
-

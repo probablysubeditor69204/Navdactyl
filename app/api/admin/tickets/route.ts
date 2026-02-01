@@ -18,7 +18,8 @@ export async function GET() {
                 user: {
                     select: {
                         username: true,
-                        email: true
+                        email: true,
+                        avatarUrl: true
                     }
                 }
             }
@@ -58,6 +59,37 @@ export async function PATCH(req: Request) {
 
     } catch (error: any) {
         console.error("Admin Update Ticket Status Error", error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+}
+export async function DELETE(req: Request) {
+    try {
+        const session = await getServerSession(authOptions);
+
+        if (!session || !(session.user as any).isAdmin) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const { searchParams } = new URL(req.url);
+        const id = searchParams.get('id');
+
+        if (!id) {
+            return NextResponse.json({ error: 'Ticket ID is required' }, { status: 400 });
+        }
+
+        // Delete all messages first due to relations
+        await prisma.ticketMessage.deleteMany({
+            where: { ticketId: id }
+        });
+
+        await prisma.ticket.delete({
+            where: { id }
+        });
+
+        return NextResponse.json({ success: true });
+
+    } catch (error: any) {
+        console.error("Admin Delete Ticket Error", error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

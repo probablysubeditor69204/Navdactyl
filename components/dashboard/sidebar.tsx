@@ -120,9 +120,26 @@ export function Sidebar({ className }: SidebarProps) {
                 </div>
             </div>
 
-            {/* Logo at Bottom */}
-
+            {/* Bottom Section with User Profile */}
+            <div className="px-5 py-4 border-t border-border/50">
+                <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10 border border-primary/20">
+                        <AvatarImage src={(session?.user as any)?.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${session?.user?.name}`} />
+                        <AvatarFallback className="font-bold text-xs uppercase">{session?.user?.name?.substring(0, 2)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-white truncate leading-none mb-1">
+                            {session?.user?.name}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground truncate uppercase font-bold tracking-tight">
+                            {session?.user?.email}
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
     )
 }
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
