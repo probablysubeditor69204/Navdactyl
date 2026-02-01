@@ -240,17 +240,32 @@ class PterodactylService {
 
     async getServersByUserId(userId: number): Promise<PterodactylServerAttributes[]> {
         try {
-            // Some Pterodactyl versions don't allow filter[user_id] in Application API.
-            // We'll fetch all and filter manually to be safe.
-            const response = await this.client.get<PterodactylServersResponse>('/application/servers');
-            return response.data.data
-                .map(d => d.attributes)
-                .filter(s => s.user === userId);
+            if (!userId) {
+                console.warn("[PterodactylService] getServersByUserId called with missing userId");
+                return [];
+            }
+
+            console.log(`[PteroService] AUDIT: Searching for User ID ${userId}`);
+
+            // 1. Fetch first page
+            const response = await this.client.get<PterodactylServersResponse>('/application/servers?per_page=100');
+            let dataList = response.data.data;
+            const meta = response.data.meta.pagination;
+
+            // 2. Fetch all other pages
+            if (meta.total_pages > 1) {
+                console.log(`[PteroService] AUDIT: Fetching ${meta.total_pages} pages Total...`);
+                for (let i = 2; i <= Math.min(meta.total_pages, 10); i++) {
+                    const next = await this.client.get<PterodactylServersResponse>(`/application/servers?page=${i}&per_page=100`);
+                    dataList = [...dataList, ...next.data.data];
+                }
+            }
+
+            const allServers = dataList.map(d => d.attributes);
+            const matches = allServers.filter(s => Number(s.user) === Number(userId));
+            return matches;
         } catch (error: any) {
             console.error('Pterodactyl Get Servers Error:', error.response?.data || error.message);
-            if (error.response?.data?.errors) {
-                throw new Error(error.response.data.errors.map((e: any) => e.detail).join(', '));
-            }
             throw new Error('Failed to fetch servers from Pterodactyl');
         }
     }
@@ -345,15 +360,20 @@ class PterodactylService {
         }
     }
     private async getAccountKey(): Promise<string> {
+        // Priority order:
+        // 1. ENV PTERODACTYL_ACCOUNT_KEY
+        // 2. DB pterodactylAccountKey
+        // 3. Fallback to PTERODACTYL_API_KEY if it's a client key (ptlc_)
         if (process.env.PTERODACTYL_ACCOUNT_KEY) return process.env.PTERODACTYL_ACCOUNT_KEY;
 
-        // Dynamic import to avoid circular dependencies if any
         const { prisma } = await import('@/lib/prisma');
         const settings = await prisma.setting.findUnique({ where: { id: 'site-settings' } });
-
         if (settings?.pterodactylAccountKey) return settings.pterodactylAccountKey;
 
-        throw new Error("Pterodactyl Account Key (ptlc_) is not configured in Admin Panel or ENV.");
+        const mainApiKey = process.env.PTERODACTYL_API_KEY;
+        if (mainApiKey?.startsWith('ptlc_')) return mainApiKey;
+
+        throw new Error("Pterodactyl Account Key (ptlc_) is not configured. Please add it to the Admin Panel or .env file.");
     }
 
     async getWebsocketCredentials(serverIdentifier: string): Promise<{ data: { token: string; socket: string } }> {

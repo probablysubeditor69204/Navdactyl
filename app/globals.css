@@ -150,21 +150,32 @@
   }
 }
 
-/* Glassmorphism Utilities */
 @layer utilities {
-  .glass {
-    @apply bg-black/40 backdrop-blur-xl border border-white/10;
+  .no-scrollbar::-webkit-scrollbar {
+    display: none !important;
   }
 
-  .glass-card {
-    @apply bg-card/50 backdrop-blur-lg border border-border/50 shadow-2xl;
+  .no-scrollbar {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
   }
+}
 
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-white via-neutral-200 to-neutral-400;
-  }
+/* Forcefully Hide scrollbar for Chrome, Safari, Brave, and Opera */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
 
-  .text-gradient-primary {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-violet-400;
-  }
+/* Forcefully Hide scrollbar for IE, Edge and Firefox */
+html,
+body,
+* {
+  -ms-overflow-style: none !important;
+  /* IE and Edge */
+  scrollbar-width: none !important;
+  /* Firefox */
 }

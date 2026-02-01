@@ -6,13 +6,14 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { toast } from "sonner"
-import { Loader2, Server, Settings } from "lucide-react"
+import { Loader2, Server, Settings, Zap, Shield, Globe, Cpu, ChevronRight, Sparkles } from "lucide-react"
 
 import { Form } from "@/components/ui/form"
 import { ServerDetailsCard } from "@/components/dashboard/create-server/server-details-card"
 import { LocationSelector } from "@/components/dashboard/create-server/location-selector"
 import { SoftwareSelector } from "@/components/dashboard/create-server/software-selector"
-import { AllocationSummarySidebar } from "@/components/dashboard/create-server/allocation-summary"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 const createServerSchema = z.object({
     name: z.string().min(3, "Server name must be at least 3 characters").max(191),
@@ -49,6 +50,7 @@ export function CreateServerForm() {
     })
 
     const watchAll = form.watch();
+    const isReady = !!watchAll.name && !!watchAll.nodeId && !!watchAll.nestId && !!watchAll.eggId;
 
     useEffect(() => {
         async function fetchInitialResources() {
@@ -65,7 +67,7 @@ export function CreateServerForm() {
 
                 if (nodesData.nodes) setNodes(nodesData.nodes)
                 if (nestsData.nests) setNests(nestsData.nests)
-                if (!settingsData.error) setSettings(prev => ({ ...prev, ...settingsData }))
+                if (!settingsData.error) setSettings((prev: any) => ({ ...prev, ...settingsData }))
             } catch (err) {
                 console.error("Failed to fetch resources", err)
                 toast.error("Failed to load server options")
@@ -127,12 +129,9 @@ export function CreateServerForm() {
 
     if (loadingResources) {
         return (
-            <div className="flex h-[450px] w-full flex-col items-center justify-center rounded-2xl border border-border bg-card shadow-sm">
-                <div className="bg-primary/5 p-4 rounded-full mb-4">
-                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                </div>
-                <h3 className="text-white font-bold text-lg mb-1">Loading Options</h3>
-                <p className="text-muted-foreground text-sm">Initializing deployment configurator...</p>
+            <div className="flex h-[400px] w-full flex-col items-center justify-center rounded-xl border border-border bg-card shadow-sm">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-4" />
+                <p className="text-muted-foreground font-medium">Loading configurator...</p>
             </div>
         )
     }
@@ -148,26 +147,31 @@ export function CreateServerForm() {
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-10">
-                <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-border pb-8 gap-4">
-                    <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-primary font-bold text-[10px] uppercase tracking-widest mb-2">
-                            <Server className="h-3 w-3" />
-                            Configurator
-                        </div>
-                        <h1 className="text-4xl font-extrabold text-white tracking-tight">Deploy Instance</h1>
-                        <p className="text-muted-foreground text-sm font-medium">Configure your new high-performance cloud server.</p>
-                    </div>
-                    <div className="flex items-center gap-3 bg-card border border-border px-4 py-2.5 rounded-xl shadow-sm">
-                        <Settings className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-xs font-bold text-white uppercase tracking-tight">API Integrated</span>
-                    </div>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-12 max-w-4xl mx-auto pb-20">
+                <div className="space-y-2">
+                    <h2 className="text-3xl font-bold tracking-tight text-white">Create New Instance</h2>
+                    <p className="text-muted-foreground">Select your server options and deploy instantly.</p>
                 </div>
 
-                <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-                    <div className="space-y-10 lg:col-span-2">
+                <div className="space-y-10">
+                    <section className="space-y-4">
+                        <div className="flex items-center gap-2 text-white/50 font-bold uppercase tracking-widest text-xs">
+                            <span className="text-primary">01.</span> Identity
+                        </div>
                         <ServerDetailsCard form={form} />
+                    </section>
+
+                    <section className="space-y-4">
+                        <div className="flex items-center gap-2 text-white/50 font-bold uppercase tracking-widest text-xs">
+                            <span className="text-primary">02.</span> Location
+                        </div>
                         <LocationSelector form={form} nodes={allowedNodesList} />
+                    </section>
+
+                    <section className="space-y-4">
+                        <div className="flex items-center gap-2 text-white/50 font-bold uppercase tracking-widest text-xs">
+                            <span className="text-primary">03.</span> Software
+                        </div>
                         <SoftwareSelector
                             form={form}
                             nests={nests}
@@ -175,10 +179,33 @@ export function CreateServerForm() {
                             loadingEggs={loadingEggs}
                             watchNest={watchNest}
                         />
-                    </div>
+                    </section>
+                </div>
 
-                    <div className="lg:col-span-1">
-                        <AllocationSummarySidebar settings={settings} isLoading={isLoading} watchAll={watchAll} />
+                <div className="pt-8 border-t border-border">
+                    <div className="flex items-center justify-between gap-4 flex-wrap">
+                        <div className="space-y-1">
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest leading-none">Resource Cost</p>
+                            <p className="text-2xl font-black text-white">$0.00<span className="text-xs font-bold text-muted-foreground ml-1">/Mo</span></p>
+                        </div>
+                        <Button
+                            type="submit"
+                            disabled={isLoading || !isReady}
+                            size="lg"
+                            className="h-14 px-10 font-bold text-sm uppercase tracking-widest rounded-xl transition-all shadow-lg active:scale-95"
+                        >
+                            {isLoading ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                    Deploying...
+                                </>
+                            ) : (
+                                <>
+                                    Create Server
+                                    <ChevronRight className="ml-2 h-4 w-4" />
+                                </>
+                            )}
+                        </Button>
                     </div>
                 </div>
             </form>

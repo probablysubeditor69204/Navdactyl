@@ -126,11 +126,13 @@ export function ConsoleViewer({ identifier, serverName }: ConsoleViewerProps) {
 
             socket.onerror = (error) => {
                 console.error("WebSocket error:", error)
+                setLogs(prev => [...prev, "[System] WebSocket error occurred. This is often caused by Wings CORS (allowed_origins) or a firewall."])
             }
 
             socket.onclose = (event) => {
-                setLogs(prev => [...prev, `[System] Connection closed (code: ${event.code}). Reconnecting in 3s...`])
-                setTimeout(connectWebsocket, 3000)
+                const reason = event.wasClean ? "Clean close" : "Abnormal closure (check Wings allowed_origins)";
+                setLogs(prev => [...prev, `[System] Connection closed (code: ${event.code}, ${reason}). Reconnecting in 5s...`])
+                setTimeout(connectWebsocket, 5000)
             }
 
         } catch (error) {

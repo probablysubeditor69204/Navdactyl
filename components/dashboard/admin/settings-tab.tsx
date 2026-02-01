@@ -109,13 +109,31 @@ export function SettingsTab() {
     const handleSaveAPISettings = async (e: React.FormEvent) => {
         e.preventDefault()
         setSettingsLoading(true)
-        // Mock save logic for now or implement specific endpoint
-        // NOTE: Actually Ptero URL and Keys might be better handled via ENV in production.
-        // But if they are in DB, we use them.
-        setTimeout(() => {
-            toast.success("API settings saved! (Note: changes may require restart if using ENV)")
+
+        try {
+            const currentRes = await fetch("/api/admin/settings")
+            const currentData = await currentRes.json()
+
+            const res = await fetch("/api/admin/settings", {
+                method: "POST",
+                body: JSON.stringify({
+                    ...currentData,
+                    pterodactylAccountKey
+                }),
+                headers: { "Content-Type": "application/json" }
+            })
+
+            if (res.ok) {
+                toast.success("API connection settings updated!")
+            } else {
+                const data = await res.json()
+                toast.error(data.error || "Failed to update settings")
+            }
+        } catch (error) {
+            toast.error("An error occurred while saving settings")
+        } finally {
             setSettingsLoading(false)
-        }, 1000)
+        }
     }
 
     const NavButton = ({ id, label, icon: Icon }: any) => (
